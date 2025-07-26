@@ -1,6 +1,7 @@
-@model PieListViewModel
+﻿@model PieListViewModel
 
 <h1>@Model.CurrentCategory</h1>
+
 <div class="row row-cols-1 row-cols-md-3 g-4">
 
     @foreach (var pie in Model.Pies)
@@ -14,7 +15,10 @@
 
                     <div class="d-flex justify-content-between mt-2">
                         <h2 class="text-start">
-                            <a class="pie-link">@pie.Name</a>
+                            <a asp-controller="Pie"
+                               asp-action="Details"
+                               asp-route-id="@pie.PieId"
+                               class="pie-link">@pie.Name</a>
                         </h2>
                         <h5 class="text-nowrap">
                             @pie.Price.ToString("c")
