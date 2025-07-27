@@ -19,8 +19,7 @@ namespace BethanysPieShop.Models
         {
             ISession? session = services.GetRequiredService<IHttpContextAccessor>()?.HttpContext?.Session;
 
-            BethanysPieShopDbContext context = services.GetService<BethanysPieShopDbContext>() 
-                ?? throw new Exception("Error initializing");
+            BethanysPieShopDbContext context = services.GetService<BethanysPieShopDbContext>() ?? throw new Exception("Error initializing");
 
             string cartId = session?.GetString("CartId") ?? Guid.NewGuid().ToString();
 
@@ -31,8 +30,9 @@ namespace BethanysPieShop.Models
 
         public void AddToCart(Pie pie)
         {
-            var shoppingCartItem = _bethanysPieShopDbContext.ShoppingCartItems
-                .SingleOrDefault(s => s.Pie.PieId == pie.PieId && s.ShoppingCartId == ShoppingCartId);
+            var shoppingCartItem =
+                    _bethanysPieShopDbContext.ShoppingCartItems.SingleOrDefault(
+                        s => s.Pie.PieId == pie.PieId && s.ShoppingCartId == ShoppingCartId);
 
             if (shoppingCartItem == null)
             {
@@ -49,14 +49,14 @@ namespace BethanysPieShop.Models
             {
                 shoppingCartItem.Amount++;
             }
-
             _bethanysPieShopDbContext.SaveChanges();
         }
 
         public int RemoveFromCart(Pie pie)
         {
-            var shoppingCartItem = _bethanysPieShopDbContext.ShoppingCartItems
-                .SingleOrDefault(s => s.Pie.PieId == pie.PieId && s.ShoppingCartId == ShoppingCartId);
+            var shoppingCartItem =
+                    _bethanysPieShopDbContext.ShoppingCartItems.SingleOrDefault(
+                        s => s.Pie.PieId == pie.PieId && s.ShoppingCartId == ShoppingCartId);
 
             var localAmount = 0;
 
@@ -71,9 +71,9 @@ namespace BethanysPieShop.Models
                 {
                     _bethanysPieShopDbContext.ShoppingCartItems.Remove(shoppingCartItem);
                 }
-
-                _bethanysPieShopDbContext.SaveChanges();
             }
+
+            _bethanysPieShopDbContext.SaveChanges();
 
             return localAmount;
         }
@@ -81,18 +81,19 @@ namespace BethanysPieShop.Models
         public List<ShoppingCartItem> GetShoppingCartItems()
         {
             return ShoppingCartItems ??=
-                _bethanysPieShopDbContext.ShoppingCartItems
-                    .Where(c => c.ShoppingCartId == ShoppingCartId)
-                    .Include(s => s.Pie)
-                    .ToList();
+                       _bethanysPieShopDbContext.ShoppingCartItems.Where(c => c.ShoppingCartId == ShoppingCartId)
+                           .Include(s => s.Pie)
+                           .ToList();
         }
 
         public void ClearCart()
         {
-            var cartItems = _bethanysPieShopDbContext.ShoppingCartItems
+            var cartItems = _bethanysPieShopDbContext
+                .ShoppingCartItems
                 .Where(cart => cart.ShoppingCartId == ShoppingCartId);
 
             _bethanysPieShopDbContext.ShoppingCartItems.RemoveRange(cartItems);
+
             _bethanysPieShopDbContext.SaveChanges();
         }
 
@@ -100,10 +101,12 @@ namespace BethanysPieShop.Models
         {
             var total = _bethanysPieShopDbContext.ShoppingCartItems
                 .Where(c => c.ShoppingCartId == ShoppingCartId)
-                .AsEnumerable() // Ensures client-side evaluation to avoid SQLite decimal issue
+                .Include(c => c.Pie) // make sure related Pie is loaded
+                .AsEnumerable()      // switch to in-memory LINQ (bypasses SQLite decimal limit)
                 .Sum(c => c.Pie.Price * c.Amount);
 
             return total;
         }
+
     }
 }
